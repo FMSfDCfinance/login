@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Smartsupp Live Chat script -->
+<script type="text/javascript">
+var _smartsupp = _smartsupp || {};
+_smartsupp.key = '09886095a5987ea5673fadbf440836e647989737';
+window.smartsupp||(function(d) {
+	var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
+	s=d.getElementsByTagName('script')[0];c=d.createElement('script');
+	c.type='text/javascript';c.charset='utf-8';c.async=true;
+	c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
+})(document);
+</script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Withdraw - UI Wallet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #f8fafc;
+    color: #1e293b;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 20px 40px;
+  }
+  .page-header h1 {
+    font-size: 30px;
+    color: #3b82f6;
+    text-shadow: 0 0 8px #3b82f6;
+  }
+  .page-header p {
+    color: #334155;
+    font-size: 14px;
+    margin-top: 8px;
+  }
+  .back-btn {
+    position: fixed; top: 20px; left: 20px;
+    background: #334155; color: #ffffff;
+    padding: 8px 14px; border-radius: 10px;
+    font-size: 14px; text-decoration: none;
+    transition: 0.3s; z-index: 10;
+    cursor: pointer;
+  }
+  .back-btn:hover { background: #1e293b; }
+  .container {
+    width: 100%; max-width: 420px;
+    background: #f1f5f9;
+    border-radius: 20px;
+    padding: 30px 20px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.05);
+    backdrop-filter: blur(20px);
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .balance-box {
+    margin-bottom: 25px; padding: 16px;
+    background: #ffffff; border-radius: 12px;
+    box-shadow: inset 0 0 10px #e2e8f0;
+    text-align: center;
+  }
+  .balance-box h3 {
+    font-size: 14px; color: #334155; margin-bottom: 5px;
+  }
+  .balance-box p {
+    font-size: 22px;
+    font-weight: bold;
+    color: #0f172a;
+    text-shadow: none;
+  }
+  .form-group { margin-bottom: 18px; }
+  label {
+    display: block; margin-bottom: 6px;
+    font-size: 14px; color: #334155;
+  }
+  input, select {
+    width: 100%; padding: 14px;
+    border: 1px solid #e2e8f0; border-radius: 12px;
+    background: #ffffff; color: #0f172a;
+    font-size: 15px;
+  }
+  input::placeholder { color: #64748b; opacity: 0.7; }
+  .crypto-preview {
+    display: flex; align-items: center;
+    gap: 10px; margin-bottom: 8px; margin-top: 10px;
+  }
+  .crypto-preview img { width: 24px; height: 24px; }
+  .withdraw-btn {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, #3b82f6, #fbbf24);
+    border: none; border-radius: 12px;
+    font-size: 16px; font-weight: 600;
+    color: #ffffff; cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 4px 15px rgba(59,130,246,0.4);
+  }
+  .withdraw-btn:hover:not(:disabled) { 
+    transform: translateY(-2px); 
+    background: #3b82f6; 
+  }
+  .withdraw-btn:disabled {
+    background: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+  .loader { display: none; justify-content: center; margin-top: 14px; }
+  .loader div {
+    width: 8px; height: 8px; margin: 0 3px;
+    border-radius: 50%; background: #3b82f6;
+    animation: pulse 0.8s infinite alternate;
+  }
+  .loader div:nth-child(2) { animation-delay: 0.2s; }
+  .loader div:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse {
+    to { transform: scale(1.4); opacity: 0.6; }
+  }
+  .note {
+    margin-top: 14px;
+    font-size: 13px;
+    color: #334155;
+    text-align: center;
+  }
+  .toast, .copied-toast {
+    position: fixed;
+    bottom: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 500;
+    transition: bottom 0.4s ease;
+    z-index: 999;
+    color: #ffffff;
+  }
+  .toast {
+    background: #dc2626;
+    box-shadow: 0 6px 16px rgba(220,38,38,0.4);
+  }
+  .copied-toast {
+    background: #3b82f6;
+    box-shadow: 0 6px 16px rgba(37,99,235,0.4);
+  }
+  .toast.show, .copied-toast.show { bottom: 60px; }
+  .filter-buttons {
+    display: flex; gap: 10px; justify-content: center;
+    margin-bottom: 10px; flex-wrap: wrap;
+  }
+  .filter-buttons button {
+    background: #e2e8f0;
+    border: none; color: #0f172a;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.3s ease;
+  }
+  .filter-buttons button.active { background: #3b82f6; color: #fff; }
+  .filter-buttons button:hover:not(.active) {
+    background: #cbd5e1;
+  }
+  .withdrawal-entry {
+    background: #ffffff; margin-bottom: 10px;
+    padding: 10px 14px; border-radius: 10px;
+    font-size: 13px; box-shadow: 0 0 5px #e2e8f0;
+    position: relative;
+    word-break: break-word;
+  }
+  .withdrawal-entry .actions {
+    margin-top: 5px; display: flex; gap: 10px;
+  }
+  .withdrawal-entry button {
+    padding: 4px 10px; font-size: 12px;
+    border: none; border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  .approve-btn { background: #22c55e; color: white; }
+  .approve-btn:hover { background: #16a34a; }
+  .decline-btn { background: #dc2626; color: white; }
+  .decline-btn:hover { background: #b91c1c; }
+  .copy-btn {
+    cursor: pointer;
+    background: #e2e8f0;
+    color: #1e293b;
+    border-radius: 6px;
+    padding: 2px 8px;
+    margin-left: 8px;
+    font-size: 12px;
+    border: none;
+    transition: background 0.3s ease;
+    vertical-align: middle;
+  }
+  .copy-btn:hover {
+    background: #fbbf24;
+    color: #ffffff;
+  }
+</style>
+</head>
+
+<body>
+  <!-- ░░░ Back to Dashboard ░░░ -->
+  <a href="dashboard.html" class="back-btn" role="button">&larr; Back</a>  <!-- ░░░ Page Header ░░░ -->  <div class="page-header">
+    <h1>Withdraw</h1>
+    <p>Send your funds to your preferred wallet, Cash App, or bank account</p>
+  </div>  <!-- ░░░ Main Container ░░░ -->  <div class="container">
+    <!-- Balance -->
+    <div class="balance-box">
+      <h3>Available Balance</h3>
+      <p id="balanceAmount">$0.00</p>
+    </div><!-- Deposit Button -->
+<button class="open-deposit-btn" onclick="openDepositModal()">Deposit Funds</button>
+
+<!-- Withdrawal Method -->
+<div class="form-group">
+  <label for="withdrawalMethod">Select Withdrawal Method</label>
+  <select id="withdrawalMethod" aria-label="Select withdrawal method">
+    <option value="">Select Method</option>
+    <option value="crypto">Cryptocurrency</option>
+    <option value="bank">Bank Account</option>
+    <option value="cashapp">Cash App</option>
+  </select>
+</div>
+
+<!-- Crypto Selector -->
+<div class="form-group" id="cryptoSelector" style="display:none;">
+  <label for="crypto">Select Cryptocurrency</label>
+  <select id="crypto" aria-label="Select cryptocurrency">
+    <option value="">Select</option>
+    <option value="usdt">USDT</option>
+    <option value="usdc">USDC</option>
+    <option value="btc">Bitcoin</option>
+    <option value="eth">Ethereum</option>
+    <option value="sol">Solana</option>
+    <option value="xrp">XRP</option>
+    <option value="ton">Toncoin</option>
+    <option value="bnb">Binance Coin</option>
+  </select>
+</div>
+
+<!-- Amount -->
+<div class="form-group">
+  <label for="usdAmount">Amount (USD)</label>
+  <input type="number" id="usdAmount" step="0.01" placeholder="Enter amount in USD" aria-label="Amount in USD" />
+</div>
+
+<!-- Details (wallet / bank / CashApp) -->
+<div class="form-group" id="withdrawalDetails" style="display:none;">
+  <label for="withdrawalAddress" id="detailsLabel">Enter Details</label>
+  <input type="text" id="withdrawalAddress" placeholder="" aria-label="Withdrawal details" />
+</div>
+
+<!-- Withdraw Button / Loader -->
+<button class="withdraw-btn" id="withdrawBtn" onclick="submitWithdraw()" disabled>Submit Withdrawal</button>
+<div class="loader" id="loader"><div></div><div></div><div></div></div>
+
+<p class="note">Minimum withdrawal is $50,000</p>
+
+<!-- History Filters -->
+<div class="filter-buttons" aria-label="Filter withdrawal history">
+  <button type="button" class="active" data-filter="all">All</button>
+  <button type="button" data-filter="pending">Pending</button>
+  <button type="button" data-filter="approved">Approved</button>
+  <button type="button" data-filter="declined">Declined</button>
+</div>
+
+<!-- History List -->
+<div id="withdrawalHistory" aria-live="polite" aria-atomic="true"></div>
+
+  </div>  <!-- Toasts -->  <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+  <div class="copied-toast" id="copiedToast" role="alert" aria-live="polite">Copied to clipboard!</div>  <!-- ░░░ Deposit Gate Modal ░░░ -->  <div id="depositModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="depositModalTitle">
+      <h2 id="depositModalTitle">Withdrawal Locked</h2>
+      <p id="depositRequirementText">To unlock withdrawals, please fund your account with a minimum deposit.</p>
+      <div class="modal-actions">
+        <a href="deposit.html" class="btn primary">Deposit Now</a>
+        <button type="button" class="btn secondary" onclick="closeDepositModal()">Later</button>
+      </div>
+    </div>
+  </div>  <!-- ░░░ Quick Styles ░░░ -->  <style>
+    /* modal + buttons */
+    .modal-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.65);z-index:1000;}
+    .modal-content{background:#fff;border-radius:1rem;padding:2rem;max-width:400px;width:90%;text-align:center;box-shadow:0 15px 30px rgba(0,0,0,.25);}    
+    .modal-content h2{margin:0;font-size:1.6rem;}
+    .modal-actions{display:flex;gap:1rem;justify-content:center;margin-top:1.5rem;}
+    .btn{padding:.75rem 1.5rem;border:none;border-radius:.5rem;font-weight:600;cursor:pointer;text-decoration:none;}
+    .btn.primary{background:#2563eb;color:#fff;} .btn.primary:hover{background:#1d4ed8;}
+    .btn.secondary{background:#e5e7eb;color:#1f2937;} .btn.secondary:hover{background:#d1d5db;}
+    .open-deposit-btn{background:#3b82f6;color:#fff;padding:.75rem 1.5rem;border:none;border-radius:.5rem;font-size:1rem;margin:1rem 0 2rem;cursor:pointer;}
+    .open-deposit-btn:hover{background:#2563eb;}
+  </style>  <!-- ░░░ Script ░░░ -->  <script>
+    /* Firebase init */
+    const firebaseConfig={
+      apiKey:"AIzaSyBZlJPPicZDa_2SUXsunrt6BXLUUv6gra4",
+      authDomain:"happy-44ff1.firebaseapp.com",
+      projectId:"happy-44ff1",
+      storageBucket:"happy-44ff1.appspot.com",
+      messagingSenderId:"33199685273",
+      appId:"1:33199685273:web:a6298c8db930f43f4e0208"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth=firebase.auth(),db=firebase.firestore();
+
+    /* DOM refs */
+    const balanceAmount=document.getElementById('balanceAmount');
+    const withdrawalMethod=document.getElementById('withdrawalMethod');
+    const cryptoSelector=document.getElementById('cryptoSelector');
+    const cryptoSelect=document.getElementById('crypto');
+    const withdrawalDetails=document.getElementById('withdrawalDetails');
+    const detailsInput=document.getElementById('withdrawalAddress');
+    const detailsLabel=document.getElementById('detailsLabel');
+    const usdInput=document.getElementById('usdAmount');
+    const withdrawBtn=document.getElementById('withdrawBtn');
+    const loader=document.getElementById('loader');
+    const toast=document.getElementById('toast');
+    const copiedToast=document.getElementById('copiedToast');
+    const withdrawalHistory=document.getElementById('withdrawalHistory');
+    const filterButtons=document.querySelectorAll('.filter-buttons button');
+    const depositModal=document.getElementById('depositModal');
+    const depositRequirementText=document.getElementById('depositRequirementText');
+
+    /* constants */
+    const MIN_WITHDRAWAL=50000;
+
+    /* state */
+    let user=null,userBalance=0,withdrawalDocs=[];
+
+    /* helpers */
+    const showToast=(msg,err=true)=>{toast.textContent=msg;toast.style.backgroundColor=err?'#dc2626':'#16a34a';toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),4e3);};
+    const openDepositModal=()=>{
+      const amt=parseFloat(usdInput.value);
+      if(!isNaN(amt)&&amt>0){
+        const req=(amt*0.10).toLocaleString(undefined,{style:'currency',currency:'USD'});
+        depositRequirementText.innerHTML=`To unlock withdrawals, please fund your account with a minimum deposit of <strong>${req}</strong>.`;
+      }else{
+        depositRequirementText.innerHTML='To unlock withdrawals, please fund your account with a deposit equivalent to <strong>10% of your withdrawal amount</strong>.';
+      }
+      depositModal.style.display='flex';
+    };
+    const closeDepositModal=()=>depositModal.style.display='none';
+
+    /* dynamic placeholders */
+    withdrawalMethod.addEventListener('change',()=>{
+      const m=withdrawalMethod.value;
+      if(m==='crypto'){
+        cryptoSelector.style.display='block';
+        withdrawalDetails.style.display='block';
+        detailsLabel.textContent='Wallet Address';
+        detailsInput.placeholder='Enter destination wallet address';
+      }else if(m==='bank'){
+        cryptoSelector.style.display='none';
+        withdrawalDetails.style.display='block';
+        detailsLabel.textContent='Bank Account';
+        detailsInput.placeholder='IBAN or Routing / Account';
+      }else if(m==='cashapp'){
+        cryptoSelector.style.display='none';
+        withdrawalDetails.style.display='block';
+        detailsLabel.textContent='Cash App $Cashtag';
+        detailsInput.placeholder='e.g.  $YourTag';
+      }else{
+        cryptoSelector.style.display='none';
+        withdrawalDetails.style.display='none';
+      }
+      validateForm();
+    });
+
+    /* validation */
+    const validateForm=()=>{
+      const m=withdrawalMethod.value,usd=parseFloat(usdInput.value||0),addr=detailsInput.value.trim();
+      let ok=true;
+      if(!m) ok=false;
+      if(m==='crypto' && (!cryptoSelect.value||!addr)) ok=false;
+      if((m==='bank'||m==='cashapp') && !addr) ok=false;
+      if(isNaN(usd)||usd<MIN_WITHDRAWAL) ok=false;
+      if(usd>userBalance) ok=false;
+      withdrawBtn.disabled=!ok;
+    };
+    usdInput.addEventListener('input',validateForm);
+    detailsInput.addEventListener('input',validateForm);
+    cryptoSelect.addEventListener('change',validateForm);
+
+    /* withdraw behaviour: always show deposit modal */
+    function submitWithdraw(){
+      openDepositModal();
+    }
+
+    /* balance */
+    const fetchBalance=async()=>{
+      if(!user)return;
+      const d=await db.collection('users').doc(user.uid).get();
+      userBalance=d.exists?d.data().balance||0:0;
+      balanceAmount.textContent=`$${userBalance.toFixed(2)}`;
+      validateForm();
+    };
+
+    /* history */
+    const renderHistory=filter=>{
+      withdrawalHistory.innerHTML='';
+      const list=withdrawalDocs.filter(x=>filter==='all'||x.status===filter);
+      if(!list.length){withdrawalHistory.innerHTML='<p style="text-align:center;color:#94a3b8;">No withdrawals found.</p>';return;}
+      list.forEach(x=>{
+        const div=document.createElement('div');div.className='withdrawal-entry';
+        div.innerHTML=`<div><strong>Amount:</strong> $${x.amountUSD.toFixed(2)}</div>
+                       <div><strong>Method:</strong> ${x.method}</div>
+                       <div><strong>Details:</strong> ${x.details||'—'}</div>
+                       <div><strong>Status:</strong> ${x.status}</div>
+                       <div><strong>Date:</strong> ${x.timestamp?.toDate().toLocaleString()||'N/A'}</div>`;
+        withdrawalHistory.appendChild(div);
+      });
+    };
+    const fetchHistory=async()=>{
+      if(!user)return;
+      const snap=await db.collection('users').doc(user.uid).collection('withdrawals').orderBy('timestamp','desc').get();
+      withdrawalDocs=snap.docs.map(d=>({...d.data(),id:d.id}));
+      renderHistory('all');
+    };
+
+    filterButtons.forEach(btn=>btn.addEventListener('click',()=>{filterButtons.forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderHistory(btn.dataset.filter);}));
+
+    /* auth */
+    auth.onAuthStateChanged(async u=>{
+      if(u){user=u;await fetchBalance();await fetchHistory();}
+      else{user=null;userBalance=0;balanceAmount.textContent='$0.00';withdrawalHistory.innerHTML='<p style="text-align:center;color:#94a3b8;">Please log in to see withdrawal history.</p>';}
+    });
+  </script></body>
